@@ -2,7 +2,7 @@
   "name": "محاسبه‌گر قیمت طلا",
   "short_name": "قیمت طلا",
   "description": "محاسبه قیمت طلای 18 عیار از روی اونس جهانی و دلار آزاد",
-  "start_url": "./gold-calculator.html",
+  "start_url": "./index.html",
   "display": "standalone",
   "background_color": "#1a1a2e",
   "theme_color": "#16213e",
