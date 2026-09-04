@@ -1,0 +1,414 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>محاسبه‌گر قیمت طلا</title>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#16213e">
+<link rel="apple-touch-icon" href="icon-192.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="قیمت طلا">
+<style>
+  * { box-sizing: border-box; }
+  body {
+    font-family: Tahoma, Arial, sans-serif;
+    background: linear-gradient(135deg, #1a1a2e, #16213e);
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0;
+    padding: 20px;
+  }
+  .card {
+    background: #fff;
+    border-radius: 16px;
+    padding: 30px;
+    max-width: 420px;
+    width: 100%;
+    box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+  }
+  h1 {
+    font-size: 20px;
+    text-align: center;
+    color: #16213e;
+    margin-top: 0;
+    margin-bottom: 6px;
+  }
+  p.desc {
+    text-align: center;
+    color: #666;
+    font-size: 13px;
+    margin-bottom: 24px;
+  }
+  .field {
+    margin-bottom: 16px;
+  }
+  .input-row {
+    display: flex;
+    gap: 8px;
+  }
+  .input-row input {
+    flex: 1;
+  }
+  .fetch-btn {
+    width: auto;
+    white-space: nowrap;
+    padding: 0 14px;
+    margin-top: 0;
+    background: linear-gradient(135deg, #2c3e50, #1a252f);
+    font-size: 13px;
+  }
+  .fetch-btn:disabled {
+    opacity: 0.6;
+    cursor: default;
+  }
+  .source-note {
+    font-size: 10px;
+    color: #aaa;
+    margin-top: 4px;
+  }
+  label {
+    display: block;
+    font-size: 14px;
+    color: #333;
+    margin-bottom: 6px;
+    font-weight: bold;
+  }
+  input {
+    width: 100%;
+    padding: 12px;
+    border: 2px solid #e0e0e0;
+    border-radius: 8px;
+    font-size: 16px;
+    font-family: inherit;
+    transition: border-color 0.2s;
+  }
+  input:focus {
+    outline: none;
+    border-color: #d4af37;
+  }
+  .hint {
+    font-size: 11px;
+    color: #999;
+    margin-top: 4px;
+  }
+  button {
+    width: 100%;
+    padding: 14px;
+    background: linear-gradient(135deg, #d4af37, #b8860b);
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    font-size: 16px;
+    font-weight: bold;
+    cursor: pointer;
+    margin-top: 8px;
+    transition: opacity 0.2s;
+  }
+  button:hover { opacity: 0.9; }
+  button.secondary {
+    background: #eee;
+    color: #333;
+    margin-top: 10px;
+  }
+  .result {
+    margin-top: 20px;
+    padding: 16px;
+    background: #fdf6e3;
+    border-radius: 8px;
+    border: 1px solid #e8d9a0;
+    text-align: center;
+    display: none;
+  }
+  .result.show { display: block; }
+  .result .value {
+    font-size: 22px;
+    font-weight: bold;
+    color: #b8860b;
+  }
+  .result .label {
+    font-size: 13px;
+    color: #888;
+    margin-bottom: 4px;
+  }
+  .error {
+    color: #c0392b;
+    font-size: 13px;
+    text-align: center;
+    margin-top: 10px;
+    display: none;
+  }
+  .formula {
+    background: #f5f5f5;
+    padding: 10px;
+    border-radius: 8px;
+    font-size: 12px;
+    color: #555;
+    text-align: center;
+    margin-bottom: 20px;
+    direction: ltr;
+  }
+</style>
+</head>
+<body>
+<div class="card">
+  <h1>محاسبه‌گر قیمت طلا</h1>
+  <p class="desc">هر دو مقدار را وارد کنید تا سومی محاسبه شود</p>
+  <div class="formula">Output = O × D × 18 / 24 / 31.1 × 1000</div>
+
+  <div class="field">
+    <label for="o">O — قیمت طلای جهانی (اونس، دلار)</label>
+    <div class="input-row">
+      <input type="number" id="o" step="any" placeholder="مثلاً 2650">
+      <button class="fetch-btn" id="fetchBtn" onclick="fetchGoldPrice()">دریافت خودکار</button>
+    </div>
+    <div class="source-note" id="sourceNote">منبع: xaus.com (XAU/USD)</div>
+  </div>
+
+  <div class="field">
+    <label for="d">D — قیمت دلار آزاد (تومان/ریال)</label>
+    <div class="input-row">
+      <input type="number" id="d" step="any" placeholder="مثلاً 68000">
+      <button class="fetch-btn" id="fetchBtnD" onclick="fetchUsdtPrice()">دریافت USDT</button>
+    </div>
+    <div class="source-note" id="sourceNoteD">منبع: نوبیتکس (USDT/IRT ÷ 1000)</div>
+  </div>
+
+  <div class="field">
+    <label for="out">خروجی</label>
+    <input type="text" inputmode="decimal" id="out" placeholder="مثلاً 128,000,000">
+    <div class="hint">دقیقاً یکی از سه فیلد بالا را خالی بگذارید</div>
+  </div>
+
+  <button onclick="calculate()">محاسبه</button>
+  <button class="secondary" onclick="clearAll()">پاک کردن همه</button>
+
+  <div class="error" id="error"></div>
+
+  <div class="result" id="result">
+    <div class="label" id="resultLabel"></div>
+    <div class="value" id="resultValue"></div>
+  </div>
+</div>
+
+<script>
+const K = 18 / 24 / 31.1 * 1000; // ثابت فرمول
+
+function calculate() {
+  const oEl = document.getElementById('o');
+  const dEl = document.getElementById('d');
+  const outEl = document.getElementById('out');
+  const errorEl = document.getElementById('error');
+  const resultEl = document.getElementById('result');
+
+  errorEl.style.display = 'none';
+  resultEl.classList.remove('show');
+
+  const oVal = oEl.value.trim();
+  const dVal = dEl.value.trim();
+  const outVal = outEl.value.replace(/,/g, '').trim();
+
+  const emptyCount = [oVal, dVal, outVal].filter(v => v === '').length;
+
+  if (emptyCount !== 1) {
+    errorEl.textContent = 'لطفاً دقیقاً یکی از سه فیلد را خالی بگذارید (همان مقداری که می‌خواهید محاسبه شود).';
+    errorEl.style.display = 'block';
+    return;
+  }
+
+  let label, value;
+
+  if (oVal === '') {
+    const d = parseFloat(dVal);
+    const out = parseFloat(outVal);
+    if (d === 0 || isNaN(d) || isNaN(out)) {
+      showError('مقادیر وارد شده معتبر نیستند.');
+      return;
+    }
+    const o = out / (d * K);
+    oEl.value = round(o);
+    label = 'مقدار O محاسبه شد:';
+    value = round(o);
+  } else if (dVal === '') {
+    const o = parseFloat(oVal);
+    const out = parseFloat(outVal);
+    if (o === 0 || isNaN(o) || isNaN(out)) {
+      showError('مقادیر وارد شده معتبر نیستند.');
+      return;
+    }
+    const d = out / (o * K);
+    dEl.value = round(d);
+    label = 'مقدار D محاسبه شد:';
+    value = round(d);
+  } else {
+    const o = parseFloat(oVal);
+    const d = parseFloat(dVal);
+    if (isNaN(o) || isNaN(d)) {
+      showError('مقادیر وارد شده معتبر نیستند.');
+      return;
+    }
+    const out = o * d * K;
+    outEl.value = formatNumber(round(out));
+    label = 'خروجی محاسبه شد:';
+    value = round(out);
+  }
+
+  document.getElementById('resultLabel').textContent = label;
+  document.getElementById('resultValue').textContent = formatNumber(value);
+  resultEl.classList.add('show');
+}
+
+function round(n) {
+  return Math.round(n * 100) / 100;
+}
+
+function formatNumber(n) {
+  return n.toLocaleString('en-US');
+}
+
+function showError(msg) {
+  const errorEl = document.getElementById('error');
+  errorEl.textContent = msg;
+  errorEl.style.display = 'block';
+}
+
+function clearAll() {
+  document.getElementById('o').value = '';
+  document.getElementById('d').value = '';
+  document.getElementById('out').value = '';
+  document.getElementById('error').style.display = 'none';
+  document.getElementById('result').classList.remove('show');
+}
+
+// --- تابع کمکی: تلاش مستقیم و در صورت شکست، تلاش از طریق پروکسی عمومی ---
+// "Failed to fetch" معمولاً یعنی درخواست اصلاً به مقصد نرسیده (فیلترینگ/بلاک شبکه)
+// نه لزوماً خطای CORS. اینجا یک مسیر جایگزین از طریق یک پروکسی عمومی هم امتحان می‌شود.
+async function fetchJsonWithFallback(url) {
+  try {
+    const res = await fetch(url, { cache: 'no-store' });
+    if (!res.ok) throw new Error('کد پاسخ سرور: ' + res.status);
+    return await res.json();
+  } catch (directErr) {
+    try {
+      const proxied = 'https://api.allorigins.win/raw?url=' + encodeURIComponent(url) + '&_=' + Date.now();
+      const res2 = await fetch(proxied, { cache: 'no-store' });
+      if (!res2.ok) throw new Error('کد پاسخ سرور (پروکسی): ' + res2.status);
+      return await res2.json();
+    } catch (proxyErr) {
+      throw new Error('مستقیم: ' + (directErr.message || directErr) + ' | از طریق پروکسی: ' + (proxyErr.message || proxyErr));
+    }
+  }
+}
+
+// --- دریافت خودکار قیمت اونس طلا ---
+// توجه: TradingView هیچ API عمومی و بدون کلید برای خواندن مستقیم از مرورگر ندارد
+// و به‌دلیل محدودیت CORS، خواندن مستقیم صفحه آن از جاوااسکریپت سمت کاربر ممکن نیست.
+// به‌جای آن از یک API رایگان و باز (بدون کلید، CORS باز) استفاده شده که قیمت
+// لحظه‌ای XAU/USD (اونس جهانی طلا به دلار) را برمی‌گرداند.
+async function fetchGoldPrice() {
+  const btn = document.getElementById('fetchBtn');
+  const oEl = document.getElementById('o');
+  const noteEl = document.getElementById('sourceNote');
+  const errorEl = document.getElementById('error');
+
+  errorEl.style.display = 'none';
+  btn.disabled = true;
+  const originalText = btn.textContent;
+  btn.textContent = 'در حال دریافت...';
+
+  try {
+    const data = await fetchJsonWithFallback('https://xaus.com/api/v1/spot?compact=1');
+    const price = data.spot_usd_oz;
+    if (!price || isNaN(price)) throw new Error('قیمت دریافتی معتبر نیست');
+
+    oEl.value = price;
+    const time = new Date(data.updated_at || Date.now());
+    noteEl.textContent = 'منبع: xaus.com — به‌روزرسانی: ' + time.toLocaleTimeString('fa-IR');
+  } catch (err) {
+    errorEl.textContent = 'خطا در دریافت قیمت جهانی طلا (' + (err.message || 'خطای ناشناخته') +
+      '). این معمولاً به‌دلیل فیلترینگ/محدودیت شبکه یا نبود دسترسی مستقیم به سرور خارجی است؛ ' +
+      'اتصال یا فیلترشکن را بررسی کنید یا مقدار را دستی وارد کنید.';
+    errorEl.style.display = 'block';
+  } finally {
+    btn.disabled = false;
+    btn.textContent = originalText;
+  }
+}
+
+// --- دریافت خودکار قیمت USDT از نوبیتکس ---
+async function fetchUsdtPrice() {
+  const btn = document.getElementById('fetchBtnD');
+  const dEl = document.getElementById('d');
+  const noteEl = document.getElementById('sourceNoteD');
+  const errorEl = document.getElementById('error');
+
+  errorEl.style.display = 'none';
+  btn.disabled = true;
+  const originalText = btn.textContent;
+  btn.textContent = 'در حال دریافت...';
+
+  try {
+    const data = await fetchJsonWithFallback(
+      'https://apiv2.nobitex.ir/market/stats?srcCurrency=usdt&dstCurrency=rls'
+    );
+    if (data.status !== 'ok' || !data.stats || !data.stats['usdt-rls']) {
+      throw new Error('پاسخ نامعتبر از نوبیتکس');
+    }
+    const priceRial = parseFloat(data.stats['usdt-rls'].latest);
+    if (isNaN(priceRial)) throw new Error('قیمت دریافتی معتبر نیست');
+
+    const priceDivided = priceRial / 1000;
+    dEl.value = round(priceDivided);
+    const now = new Date();
+    noteEl.textContent = 'منبع: نوبیتکس — به‌روزرسانی: ' + now.toLocaleTimeString('fa-IR');
+  } catch (err) {
+    errorEl.textContent = 'خطا در دریافت قیمت از نوبیتکس (' + (err.message || 'خطای ناشناخته') +
+      '). اتصال یا فیلترشکن را بررسی کنید یا مقدار را دستی وارد کنید.';
+    errorEl.style.display = 'block';
+  } finally {
+    btn.disabled = false;
+    btn.textContent = originalText;
+  }
+}
+
+// --- فرمت‌بندی زنده فیلد خروجی با کاما ---
+document.getElementById('out').addEventListener('input', function(e) {
+  const input = e.target;
+  const cursorFromEnd = input.value.length - input.selectionStart;
+  let raw = input.value.replace(/,/g, '');
+
+  if (raw === '' || isNaN(raw)) {
+    if (raw !== '' && raw !== '-') {
+      // اجازه فقط اعداد، نقطه و علامت منفی
+      raw = raw.replace(/[^0-9.\-]/g, '');
+    }
+  }
+
+  const parts = raw.split('.');
+  let intPart = parts[0] || '';
+  const isNegative = intPart.startsWith('-');
+  if (isNegative) intPart = intPart.substring(1);
+  intPart = intPart.replace(/^0+(?=\d)/, '');
+  const formattedInt = intPart.replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+  let formatted = (isNegative ? '-' : '') + formattedInt;
+  if (parts.length > 1) {
+    formatted += '.' + parts[1];
+  }
+
+  input.value = formatted;
+  const newPos = Math.max(0, formatted.length - cursorFromEnd);
+  input.setSelectionRange(newPos, newPos);
+});
+
+// --- ثبت Service Worker برای قابلیت نصب و کارکرد آفلاین (PWA) ---
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('service-worker.js').catch(() => {});
+  });
+}
+</script>
+</body>
+</html>
