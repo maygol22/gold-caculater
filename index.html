@@ -65,6 +65,14 @@
     opacity: 0.6;
     cursor: default;
   }
+  .clear-btn {
+    width: auto;
+    padding: 0 12px;
+    margin-top: 0;
+    background: #e74c3c;
+    font-size: 15px;
+    flex: 0 0 auto;
+  }
   .source-note {
     font-size: 10px;
     color: #aaa;
@@ -157,13 +165,14 @@
 <div class="card">
   <h1>محاسبه‌گر قیمت طلا</h1>
   <p class="desc">هر دو مقدار را وارد کنید تا سومی محاسبه شود</p>
-  <div class="formula">Output = O × D × 18 / 24 / 31.1 × 1000</div>
+  <div class="formula">Output = O × D × 18 / 24 / 31.1 × 10000</div>
 
   <div class="field">
     <label for="o">O — قیمت طلای جهانی (اونس، دلار)</label>
     <div class="input-row">
       <input type="number" id="o" step="any" placeholder="مثلاً 2650">
       <button class="fetch-btn" id="fetchBtn" onclick="fetchGoldPrice()">دریافت خودکار</button>
+      <button class="clear-btn" type="button" onclick="clearField('o')" title="پاک کردن این فیلد">✕</button>
     </div>
     <div class="source-note" id="sourceNote">منبع: xaus.com (XAU/USD)</div>
   </div>
@@ -173,6 +182,7 @@
     <div class="input-row">
       <input type="number" id="d" step="any" placeholder="مثلاً 68000">
       <button class="fetch-btn" id="fetchBtnD" onclick="fetchUsdtPrice()">دریافت USDT</button>
+      <button class="clear-btn" type="button" onclick="clearField('d')" title="پاک کردن این فیلد">✕</button>
     </div>
     <div class="source-note" id="sourceNoteD">منبع: نوبیتکس (USDT/IRT ÷ 1000)</div>
   </div>
@@ -273,6 +283,12 @@ function showError(msg) {
   const errorEl = document.getElementById('error');
   errorEl.textContent = msg;
   errorEl.style.display = 'block';
+}
+
+function clearField(id) {
+  document.getElementById(id).value = '';
+  document.getElementById('error').style.display = 'none';
+  document.getElementById('result').classList.remove('show');
 }
 
 function clearAll() {
