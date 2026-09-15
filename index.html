@@ -159,7 +159,7 @@
 <div class="card">
   <h1>محاسبه‌گر قیمت طلا</h1>
   <p class="desc">هر دو مقدار را وارد کنید تا سومی محاسبه شود</p>
-  <div class="formula">Output = O × D × 18 / 24 / 31.1 × 100</div>
+  <div class="formula">Output = O × D × 18 / 24 / 31.1 × 1000</div>
 
   <div class="field">
     <label for="o">O — قیمت طلای جهانی (اونس، دلار)</label>
@@ -178,7 +178,7 @@
       <button class="fetch-btn" id="fetchBtnD" onclick="fetchUsdtPrice()">دریافت USDT</button>
       <button class="clear-btn" type="button" onclick="clearField('d')" title="پاک کردن این فیلد">✕</button>
     </div>
-    <div class="source-note" id="sourceNoteD">منبع: نوبیتکس (USDT/IRT ÷ 1000)</div>
+    <div class="source-note" id="sourceNoteD">منبع: نوبیتکس (USDT/IRT ÷ 10000)</div>
   </div>
 
   <div class="field">
@@ -202,7 +202,7 @@
 </div>
 
 <script>
-const K = 18 / 24 / 31.1 * 100; // ثابت فرمول
+const K = 18 / 24 / 31.1 * 1000; // ثابت فرمول
 
 function calculate() {
   const oEl = document.getElementById('o');
@@ -379,7 +379,7 @@ async function fetchUsdtPrice() {
     const priceRial = parseFloat(data.stats['usdt-rls'].latest);
     if (isNaN(priceRial)) throw new Error('قیمت دریافتی معتبر نیست');
 
-    const priceDivided = priceRial / 1000;
+    const priceDivided = priceRial / 10000;
     dEl.value = round(priceDivided);
     const now = new Date();
     noteEl.textContent = 'منبع: نوبیتکس — به‌روزرسانی: ' + now.toLocaleTimeString('fa-IR');
