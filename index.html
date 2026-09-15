@@ -4,12 +4,6 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>محاسبه‌گر قیمت طلا</title>
-<link rel="manifest" href="manifest.json">
-<meta name="theme-color" content="#16213e">
-<link rel="apple-touch-icon" href="icon-192.png">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="قیمت طلا">
 <style>
   * { box-sizing: border-box; }
   body {
@@ -174,7 +168,7 @@
       <button class="fetch-btn" id="fetchBtn" onclick="fetchGoldPrice()">دریافت خودکار</button>
       <button class="clear-btn" type="button" onclick="clearField('o')" title="پاک کردن این فیلد">✕</button>
     </div>
-    <div class="source-note" id="sourceNote">منبع: xaus.com (XAU/USD)</div>
+    <div class="source-note" id="sourceNote">منبع: goldprice.dev (XAU/USD)</div>
   </div>
 
   <div class="field">
@@ -189,7 +183,10 @@
 
   <div class="field">
     <label for="out">خروجی</label>
-    <input type="text" inputmode="decimal" id="out" placeholder="مثلاً 128,000,000">
+    <div class="input-row">
+      <input type="text" inputmode="decimal" id="out" placeholder="مثلاً 128,000,000">
+      <button class="clear-btn" type="button" onclick="clearField('out')" title="پاک کردن این فیلد">✕</button>
+    </div>
     <div class="hint">دقیقاً یکی از سه فیلد بالا را خالی بگذارید</div>
   </div>
 
@@ -336,13 +333,14 @@ async function fetchGoldPrice() {
   btn.textContent = 'در حال دریافت...';
 
   try {
-    const data = await fetchJsonWithFallback('https://xaus.com/api/v1/spot?compact=1');
-    const price = data.spot_usd_oz;
+    const data = await fetchJsonWithFallback('https://api.goldprice.dev/v1/prices?symbol=XAU-USD-SPOT');
+    const sym = data.symbols && data.symbols[0];
+    const price = sym ? parseFloat(sym.price) : NaN;
     if (!price || isNaN(price)) throw new Error('قیمت دریافتی معتبر نیست');
 
     oEl.value = price;
-    const time = new Date(data.updated_at || Date.now());
-    noteEl.textContent = 'منبع: xaus.com — به‌روزرسانی: ' + time.toLocaleTimeString('fa-IR');
+    const time = new Date((sym && sym.computed_at) || Date.now());
+    noteEl.textContent = 'منبع: goldprice.dev — به‌روزرسانی: ' + time.toLocaleTimeString('fa-IR');
   } catch (err) {
     errorEl.textContent = 'خطا در دریافت قیمت جهانی طلا (' + (err.message || 'خطای ناشناخته') +
       '). این معمولاً به‌دلیل فیلترینگ/محدودیت شبکه یا نبود دسترسی مستقیم به سرور خارجی است؛ ' +
@@ -376,7 +374,7 @@ async function fetchUsdtPrice() {
     const priceRial = parseFloat(data.stats['usdt-rls'].latest);
     if (isNaN(priceRial)) throw new Error('قیمت دریافتی معتبر نیست');
 
-    const priceDivided = priceRial / 10000;
+    const priceDivided = priceRial / 1000;
     dEl.value = round(priceDivided);
     const now = new Date();
     noteEl.textContent = 'منبع: نوبیتکس — به‌روزرسانی: ' + now.toLocaleTimeString('fa-IR');
@@ -418,13 +416,6 @@ document.getElementById('out').addEventListener('input', function(e) {
   const newPos = Math.max(0, formatted.length - cursorFromEnd);
   input.setSelectionRange(newPos, newPos);
 });
-
-// --- ثبت Service Worker برای قابلیت نصب و کارکرد آفلاین (PWA) ---
-if ('serviceWorker' in navigator) {
-  window.addEventListener('load', () => {
-    navigator.serviceWorker.register('service-worker.js').catch(() => {});
-  });
-}
 </script>
 </body>
 </html>
