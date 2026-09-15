@@ -168,7 +168,7 @@
       <button class="fetch-btn" id="fetchBtn" onclick="fetchGoldPrice()">دریافت خودکار</button>
       <button class="clear-btn" type="button" onclick="clearField('o')" title="پاک کردن این فیلد">✕</button>
     </div>
-    <div class="source-note" id="sourceNote">منبع: goldprice.dev (XAU/USD)</div>
+    <div class="source-note" id="sourceNote">منبع: نوبیتکس (PAXG/USDT ≈ XAU/USD)</div>
   </div>
 
   <div class="field">
@@ -317,10 +317,12 @@ async function fetchJsonWithFallback(url) {
 }
 
 // --- دریافت خودکار قیمت اونس طلا ---
-// توجه: TradingView هیچ API عمومی و بدون کلید برای خواندن مستقیم از مرورگر ندارد
-// و به‌دلیل محدودیت CORS، خواندن مستقیم صفحه آن از جاوااسکریپت سمت کاربر ممکن نیست.
-// به‌جای آن از یک API رایگان و باز (بدون کلید، CORS باز) استفاده شده که قیمت
-// لحظه‌ای XAU/USD (اونس جهانی طلا به دلار) را برمی‌گرداند.
+// --- دریافت خودکار قیمت اونس طلا ---
+// توجه: TradingView هیچ API عمومی و بدون کلید برای خواندن مستقیم از مرورگر ندارد.
+// همچنین نوبیتکس خودِ «انس طلا» را معامله نمی‌کند، پس API مستقیمی برای XAU ندارد؛
+// به‌جای آن، از قیمت رمزارز PAXG (پکس گلد) در نوبیتکس استفاده می‌کنیم — هر توکن PAXG
+// دقیقاً معادل یک اونس تروا طلای واقعی است، پس قیمتش تقریب بسیار نزدیکی از قیمت
+// جهانی اونس طلا (XAU/USD) است (معمولاً اختلاف زیر ۱٪).
 async function fetchGoldPrice() {
   const btn = document.getElementById('fetchBtn');
   const oEl = document.getElementById('o');
@@ -333,14 +335,17 @@ async function fetchGoldPrice() {
   btn.textContent = 'در حال دریافت...';
 
   try {
-    const data = await fetchJsonWithFallback('https://api.goldprice.dev/v1/prices?symbol=XAU-USD-SPOT');
-    const sym = data.symbols && data.symbols[0];
-    const price = sym ? parseFloat(sym.price) : NaN;
+    const data = await fetchJsonWithFallback(
+      'https://apiv2.nobitex.ir/market/stats?srcCurrency=paxg&dstCurrency=usdt'
+    );
+    if (data.status !== 'ok' || !data.stats || !data.stats['paxg-usdt']) {
+      throw new Error('پاسخ نامعتبر از نوبیتکس');
+    }
+    const price = parseFloat(data.stats['paxg-usdt'].latest);
     if (!price || isNaN(price)) throw new Error('قیمت دریافتی معتبر نیست');
 
-    oEl.value = price;
-    const time = new Date((sym && sym.computed_at) || Date.now());
-    noteEl.textContent = 'منبع: goldprice.dev — به‌روزرسانی: ' + time.toLocaleTimeString('fa-IR');
+    oEl.value = round(price);
+    noteEl.textContent = 'منبع: نوبیتکس PAXG (تقریبی) — به‌روزرسانی: ' + new Date().toLocaleTimeString('fa-IR');
   } catch (err) {
     errorEl.textContent = 'خطا در دریافت قیمت جهانی طلا (' + (err.message || 'خطای ناشناخته') +
       '). این معمولاً به‌دلیل فیلترینگ/محدودیت شبکه یا نبود دسترسی مستقیم به سرور خارجی است؛ ' +
